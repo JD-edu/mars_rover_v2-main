@@ -1,0 +1,397 @@
+<html>
+	<head>
+		<title>Mars Rover Control Center</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<style>
+			body { font-family: Arial; text-align: center; margin:0px auto; padding-top: 30px;}
+			table { margin-left: auto; margin-right: auto; }
+			td { padding: 8 px; }
+			.button {
+				background-color: #2f4468;
+				border: none;
+				color: white;
+				padding: 10px 20px;
+				text-align: center;
+				text-decoration: none;
+				display: inline-block;
+				font-size: 18px;
+				margin: 6px 3px;
+				cursor: pointer;
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+				-webkit-tap-highlight-color: rgba(0,0,0,0);
+			}
+
+			.stop-scrolling { 
+				height: 100%; 
+				overflow: hidden; 
+			} 
+			
+			img {  width: auto ;
+				max-width: 100% ;
+				height: auto ; 
+			}
+
+		</style>
+	</head>
+    <body>
+		<h1>Mars Rover Control Center</h1>
+			<table>
+				<thead>
+					<tr>
+						<td align="center" colspan="2"><h3>화성캠프 </h3></th>
+						<td align="center" colspan="2"><h3>화성정찰위성</h3></td>		
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td colspan="2" align="center"><p>
+						    화성캠프 카메라 채널: <select id="cam2_channles" ></select>
+						</p><form></td>
+						<td colspan="2" align="center"><p>
+							화성정찰위성 카메라 채널: <select id="cam_channles" ></select>
+						</p><form> </td>
+					</tr>
+					<tr>
+						<td align="center"><button class="button" id="cam2_open"> Connect  </button></td>
+						<td align="center"><button class="button" id="cam2_close">Disconnect</button></td>
+						<td align="center"><button class="button" id="cam_open"> Connect  </button></td>
+						<td align="center"><button class="button" id="cam_close">Disconnect</button></form></td>
+					</tr>
+					<tr>
+						<td colspan="2" align="center"><img id="cam2connectId" src="disconnected.png"></td>
+						<td colspan="2" align="center"><img id="camConnectId" src="disconnected.png"></td>
+					</tr>
+				</tbody>
+				<tfoot>
+					<tr>
+						<td colspan="4" style="background-color: white;">jd edu</td>
+					</tr>
+				</tfoot>
+			</table>
+			<canvas id="canvas2"></canvas>
+			<canvas id="canvas"></canvas>
+        </body>
+		<script src="http://code.jquery.com/jquery-3.5.1.min.js"></script>
+        <script>
+            window.addEventListener("load", function(evt){
+				console.log("load");
+				let host = "cobot.center"
+            	let port = 8287;
+				//let host = "192.168.0.77";
+				//let port = 8277;
+				//inputHost.value = host //디폴트
+				if (window.location.protocol == 'https:') {
+					//inputPort.value = 8276;
+					port = 8287;
+					//port = 8277
+				} else {
+					//inputPort.value = 8277;
+					port = 8286;
+					//port = 8276 
+				}
+				
+				openChannels(host, port);
+			});
+            // To disable scroll for arrow keys and space key 
+			function disableScroll() { 
+				document.body.classList.add("stop-scrolling"); 
+			}
+            // To chabge control channel connect image 
+			function connCam2ImgChange(status){
+				if(status == "on"){
+					console.log("cam2connImgChang - on");
+					$("#cam2connectId").attr("src", "connected.png");
+				}else if(status == "off"){
+					console.log("cam2connImgChang - off");
+					$("#cam2connectId").attr("src", "disconnected.png");
+				}		
+			}
+            // To chabge camera channel connect image 
+			function connCamImgChange(status){
+				if(status == "on"){
+					console.log("connImgChang - on");
+					$("#camConnectId").attr("src", "connected.png");
+				}else if(status == "off"){
+					console.log("connImgChang - off");
+					$("#camConnectId").attr("src", "disconnected.png");
+				}		
+			} 
+
+            const camChannelMenu = document.querySelector('#cam_channles')
+			let camChannlesApiUrl = "";
+			let camSaveChannle = []; //api로 받아온 채널 저장.
+			let camAPIOption = {
+                mode: "sub",
+                channel: "btlb3pjpc98lsdbc0lj0",
+                track: "colink",
+                mime: 'video/jpeg'
+            }
+            var ws;
+            const cam2ChannelMenu = document.querySelector('#cam2_channles')
+			let cam2ChannlesApiUrl = "";
+			let cam2SaveChannle = []; //api로 받아온 채널 저장.
+			let cam2APIOption = {
+                mode: "sub",
+                channel: "btlb3pjpc98lsdbc0lj0",
+                track: "colink",
+                mime: 'video/jpeg'
+            }
+            
+            var ws2;
+            function openChannels(host, port){
+
+                console.log("Try to open cam2 channels...  ", camChannlesApiUrl)
+				if (window.location.protocol == 'https:') {
+					cam2ChannlesApiUrl = `https://${host}:${port}/monitor/http/cmd?format=json&obj=channel&op=show`;
+				} else {
+					cam2ChannlesApiUrl = `http://${host}:${port}/monitor/http/cmd?format=json&obj=channel&op=show`;
+				}
+				fetch(cam2ChannlesApiUrl)
+					.then(function (response) {
+						return response.json()
+					})
+					.then(function (response) {
+						response.map((state, index) => {
+							const _option = document.createElement('option')
+							option = _option
+							cam2SaveChannle.push([state.name, state.id])
+							option.text = state.name
+							option.value = index
+							cam2ChannelMenu.append(option)
+							cam2APIOption.channel = cam2SaveChannle[0][1]
+							console.log(cam2APIOption.channel)
+							if (response[index].state === 1) {
+								option.text = option.text + "on using"
+							}
+						})
+					});
+                console.log("Try to open cam channels...  ", camChannlesApiUrl)
+				if (window.location.protocol == 'https:') {
+					camChannlesApiUrl = `https://${host}:${port}/monitor/http/cmd?format=json&obj=channel&op=show`;
+				} else {
+					camChannlesApiUrl = `http://${host}:${port}/monitor/http/cmd?format=json&obj=channel&op=show`;
+				}
+				fetch(camChannlesApiUrl)
+					.then(function (response) {
+						return response.json()
+					})
+					.then(function (response) {
+						response.map((state, index) => {
+							const _option = document.createElement('option')
+							option = _option
+							camSaveChannle.push([state.name, state.id])
+							option.text = state.name
+							option.value = index
+							camChannelMenu.append(option)
+							camAPIOption.channel = camSaveChannle[0][1]
+							console.log(camAPIOption.channel)
+							if (response[index].state === 1) {
+								option.text = option.text + "on using"
+							}
+						})
+					});
+                camChannelMenu.onchange = function (e) { //채널을 클릭했을 떄.
+                    camAPIOption.channel = camSaveChannle[this.value][1];
+					console.log(camAPIOption.channel, "cam channel");
+
+                }
+
+                cam2ChannelMenu.onchange = function (e) { //채널을 클릭했을 떄.
+                    cam2APIOption.channel = cam2SaveChannle[this.value][1];
+					console.log(cam2APIOption.channel, "cam 2 channel");
+
+                }
+                document.getElementById("cam_open").onclick = function(evt) {
+					if (window.location.protocol == 'https:') {
+						wsurl = `wss://${host}:${port}/pang/ws/${camAPIOption.mode}?channel=${camAPIOption.channel}&track=<label>`;
+					} else {
+						wsurl = `ws://${host}:${port}/pang/ws/${camAPIOption.mode}?channel=${camAPIOption.channel}&track=<label>`;
+					}
+					
+					ws = new WebSocket(wsurl);
+					ws.binaryType = 'arraybuffer';
+
+					ws.onopen = function(evt) {
+						connCamImgChange("on");
+						console.log(ws);
+					}
+					ws.onclose = function(evt) {
+						ws = null;
+						connCamImgChange("off");
+					}
+					ws.onmessage = function(evt) {
+						// console.log(typeof evt.data)
+						if (typeof evt.data == "object") {
+							draw1(evt.data)
+						} else if (typeof evt.data == "string") {
+							//mimetype.innerHTML = `mime.Type = ${evt.data}`
+						} else {
+							//print("RESPONSE: " + evt.data);
+						}
+					}
+					ws.onerror = function(evt) {
+						//print("ERROR: " + evt.data);
+					}
+					return false;
+				};
+
+                document.getElementById("cam2_open").onclick = function(evt) {
+					if (window.location.protocol == 'https:') {
+						wsurl = `wss://${host}:${port}/pang/ws/${cam2APIOption.mode}?channel=${cam2APIOption.channel}&track=<label>`;
+					} else {
+						wsurl = `ws://${host}:${port}/pang/ws/${cam2APIOption.mode}?channel=${cam2APIOption.channel}&track=<label>`;
+					}
+					
+					ws2 = new WebSocket(wsurl);
+					ws2.binaryType = 'arraybuffer';
+
+					ws2.onopen = function(evt) {
+						connCam2ImgChange("on");
+						console.log(ws2);
+					}
+					ws2.onclose = function(evt) {
+						ws2 = null;
+						connCam2ImgChange("off");
+					}
+					ws2.onmessage = function(evt) {
+						// console.log(typeof evt.data)
+						if (typeof evt.data == "object") {
+							siva2(evt.data)
+						} else if (typeof evt.data == "string") {
+							//mimetype.innerHTML = `mime.Type = ${evt.data}`
+						} else {
+							//print("RESPONSE: " + evt.data);
+						}
+					}
+					ws2.onerror = function(evt) {
+						//print("ERROR: " + evt.data);
+					}
+					return false;
+				};
+
+                document.getElementById("cam_close").onclick = function(evt) {
+					if (!ws) {
+						return false;
+					}
+					connCamImgChange("off")
+					ws.close();
+					return false;
+				};
+                document.getElementById("cam2_close").onclick = function(evt) {
+					if (!ws2) {
+						return false;
+					}
+					connCam2ImgChange("off")
+					ws2.close();
+					return false;
+				};
+               
+            }
+
+            var canvas = document.getElementById('canvas');
+			var ctx = canvas.getContext('2d');
+			let imageSize = {
+					width : 800,
+					height : 600
+			}
+			window.onload = () => {
+					canvas.style.width = 800;
+					canvas.style.height = 600;
+                    canvas2.style.width = 800;
+					canvas2.style.height = 600;
+			}
+			function draw1(data) {
+				var arrayBufferView = new Uint8Array( data );
+				var blob = new Blob( [ arrayBufferView ], { type: "image/jpeg" } );
+				var urlCreator = window.URL || window.webkitURL;
+				var imageUrl = urlCreator.createObjectURL( blob );
+				var img  = new Image();
+				var imageData = imageUrl  //'data:image/jpeg;base64,' + Json;
+				img.src = imageData;
+				if (blob.size > 20000 && blob.size < 75000) {
+					imageSize.width = 800;
+					imageSize.height = 600;
+				}
+				if (blob.size > 75000 && blob.size < 150000) { //HD
+					imageSize.width = 1280;
+					imageSize.height = 720;
+				}
+				if (blob.size > 150000 && blob.size < 190000) { //FHD
+					imageSize.width = 1920;
+					imageSize.height = 1080;
+				}
+				if (blob.size > 200000 && blob.size < 300000) { //QHD
+					imageSize.width = 2560;
+					imageSize.height = 1440;
+				}
+           
+            
+
+                img.onload = function(){
+                    canvas.style.width = imageSize.width;
+                    canvas.style.height = imageSize.height;
+                    canvas.width = imageSize.width;
+                    canvas.height = imageSize.height;
+                    
+                    ctx.clearRect(0,0,canvas.width,canvas.height);
+                    ctx.save();
+                    ctx.drawImage(img, 0, 0,imageSize.width,imageSize.height);
+                    ctx.restore();
+                };
+            }
+
+            function siva2(data){
+                var arrayBufferView = new Uint8Array( data );
+				var blob = new Blob( [ arrayBufferView ], { type: "image/jpeg" } );
+				var urlCreator = window.URL || window.webkitURL;
+				var imageUrl = urlCreator.createObjectURL( blob );
+				var img  = new Image();
+				var imageData = imageUrl  //'data:image/jpeg;base64,' + Json;
+				img.src = imageData;
+				if (blob.size > 20000 && blob.size < 75000) {
+					imageSize.width = 800;
+					imageSize.height = 600;
+				}
+				if (blob.size > 75000 && blob.size < 150000) { //HD
+					imageSize.width = 1280;
+					imageSize.height = 720;
+				}
+				if (blob.size > 150000 && blob.size < 190000) { //FHD
+					imageSize.width = 1920;
+					imageSize.height = 1080;
+				}
+				if (blob.size > 200000 && blob.size < 300000) { //QHD
+					imageSize.width = 2560;
+					imageSize.height = 1440;
+				}
+           
+            
+
+                img.onload = function(){
+                    canvas2.style.width = imageSize.width;
+                    canvas2.style.height = imageSize.height;
+                    canvas2.width = imageSize.width;
+                    canvas2.height = imageSize.height;
+                    
+                    ctx2.clearRect(0,0,canvas.width,canvas.height);
+                    ctx2.save();
+                    ctx2.drawImage(img, 0, 0,imageSize.width,imageSize.height);
+                    ctx2.restore();
+                };
+            }
+
+            // cam2 
+            var canvas2 = document.getElementById('canvas2');
+			var ctx2 = canvas2.getContext('2d');
+			
+        
+
+
+        </script>
+  
+</html>

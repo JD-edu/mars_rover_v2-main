@@ -1,0 +1,338 @@
+<html>
+	<head>
+		<title>ESP32-CAM Robot</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<style>
+			body { font-family: Arial; text-align: center; margin:0px auto; padding-top: 30px;}
+			table { margin-left: auto; margin-right: auto; }
+			td { padding: 8 px; }
+			.button {
+				background-color: #2f4468;
+				border: none;
+				color: white;
+				padding: 10px 20px;
+				text-align: center;
+				text-decoration: none;
+				display: inline-block;
+				font-size: 18px;
+				margin: 6px 3px;
+				cursor: pointer;
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+				-webkit-tap-highlight-color: rgba(0,0,0,0);
+			}
+			img {  width: auto ;
+				max-width: 100% ;
+				height: auto ; 
+			}
+		</style>
+	</head>
+  	<body>
+		<h1>Mars Rover Control</h1>
+		<!--<img src="" id="photo" > -->
+		<p>
+			채널 선택 : <select id="channles" ></select>
+		</p><form>
+		<table>
+			<tr>
+				<td colspan="3" align="center">
+				<button class="button" 
+					onmousedown="toggleCheckbox('forward');" 
+					ontouchstart="toggleCheckbox('forward');" 
+					onmouseup="toggleCheckbox('stop');" 
+					ontouchend="toggleCheckbox('stop');">Forward
+				</button>
+				</td>
+			</tr>
+			<tr>
+				<td align="center">
+				<button class="button" 
+					onmousedown="toggleCheckbox('left');" 
+					ontouchstart="toggleCheckbox('left');" 
+					onmouseup="toggleCheckbox('stop');" 
+					ontouchend="toggleCheckbox('stop');">Left
+				</button>
+				</td>
+				<td align="center">
+					<button class="button" 
+						onmousedown="toggleCheckbox('stop');" 
+						ontouchstart="toggleCheckbox('stop');">Stop
+					</button>
+				</td>
+				<td align="center">
+					<button class="button" 
+						onmousedown="toggleCheckbox('right');" 
+						ontouchstart="toggleCheckbox('right');" 
+						onmouseup="toggleCheckbox('stop');" 
+						ontouchend="toggleCheckbox('stop');">Right
+					</button>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="3" align="center">
+					<button class="button" 
+						onmousedown="toggleCheckbox('backward');" 
+						ontouchstart="toggleCheckbox('backward');" 
+						onmouseup="toggleCheckbox('stop');" 
+						ontouchend="toggleCheckbox('stop');">Backward
+					</button>
+				</td>
+			</tr>                   
+		</table>
+		<table>
+			<tr>
+				<td align="center">
+					<button class="button" id="open">Open</button>
+				</td>
+				<td align="center">
+					<button class="button" id="close">Close</button>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top" width="50%">
+					<div id="output"></div>
+				</td>
+			</tr>
+		</table>
+		<!--<h2>Camera header control</h2>
+		<table>
+			<tr>
+				<td colspan="3" align="center">
+				<button class="button" 
+					onmousedown="toggleCheckbox('forward');" 
+					ontouchstart="toggleCheckbox('forward');" 
+					onmouseup="toggleCheckbox('stop');" 
+					ontouchend="toggleCheckbox('stop');">Up
+				</button>
+				</td>
+			</tr>
+			<tr>
+				<td align="center">
+				<button class="button" 
+					onmousedown="toggleCheckbox('left');" 
+					ontouchstart="toggleCheckbox('left');" 
+					onmouseup="toggleCheckbox('stop');" 
+					ontouchend="toggleCheckbox('stop');">Left
+				</button>
+				</td>
+				<td align="center">
+					<button class="button" 
+						onmousedown="toggleCheckbox('right');" 
+						ontouchstart="toggleCheckbox('right');" 
+						onmouseup="toggleCheckbox('stop');" 
+						ontouchend="toggleCheckbox('stop');">Right
+					</button>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="3" align="center">
+					<button class="button" 
+						onmousedown="toggleCheckbox('backward');" 
+						ontouchstart="toggleCheckbox('backward');" 
+						onmouseup="toggleCheckbox('stop');" 
+						ontouchend="toggleCheckbox('stop');">Down
+					</button>
+				</td>
+			</tr>  
+		</table>    -->             
+		<script>
+			window.addEventListener("load", function(evt){
+				console.log("load");
+				//let host = "cobot.center"
+            	//let port = 8287;
+				let host = "192.168.0.77";
+				let port = 8277;
+				//inputHost.value = host //디폴트
+				if (window.location.protocol == 'https:') {
+					//inputPort.value = 8276;
+					//port = 8287;
+					port = 8276;
+				} else {
+					//inputPort.value = 8277;
+					//port = 8276;
+					port = 8277;
+				}
+				
+				openChannels(host, port);
+			});
+
+			function toggleCheckbox(x) {
+				console.log(x);
+			}
+			/*const channelMenu = document.querySelector('#channles')
+			let channlesApiUrl = "";
+			let saveChannle = []; //api로 받아온 채널 저장.
+			let APIOption = {
+                mode: "sub",
+                channel: "btlb3pjpc98lsdbc0lj0",
+                track: "colink",
+                mime: 'video/jpeg'
+            }*/
+			function openChannels(host, port){
+				
+				/*console.log("Try to open channels...")
+				if (window.location.protocol == 'https:') {
+					channlesApiUrl = `https://${host}:${port}/monitor/http/cmd?format=json&obj=channel&op=show`;
+				} else {
+					channlesApiUrl = `http://${host}:${port}/monitor/http/cmd?format=json&obj=channel&op=show`;
+				}
+				console.log(channlesApiUrl);
+				fetch(channlesApiUrl)
+					.then(function (response) {
+						return response.json()
+					})
+					.then(function (response) {
+						response.map((state, index) => {
+							const _option = document.createElement('option')
+							option = _option
+							saveChannle.push([state.name, state.id])
+							option.text = state.name
+							option.value = index
+							channelMenu.append(option)
+							APIOption.channel = saveChannle[0][1]
+							console.log(APIOption.channel)
+							if (response[index].state === 1) {
+								option.text = option.text + "on using"
+							}
+						})
+					});*/
+				var print = function (message) { 
+					var d = document.createElement("div");
+					d.innerHTML = message;
+					output.appendChild(d);
+				};
+				// "Open" button onClick 
+				document.getElementById("open").onclick = function (evt) {
+					
+					//colinkUrl = `ws://cobot.center:8286/pang/ws/sub?channel=ca6s906pjh63qlu2ahh0&track=colink&mode=bundle`;
+					/*if (window.location.protocol == 'https:') {
+                        colinkUrl = `wss://${host}:${port}/pang/ws/${APIOption.mode}?channel=${APIOption.channel}&track=${APIOption.track}&mode=bundle`;
+                    } else {
+                        colinkUrl = `ws://${host}:${port}/pang/ws/${APIOption.mode}?channel=${APIOption.channel}&track=${APIOption.track}&mode=bundle`;
+                    }*/
+					colinkUrl = `ws://192.168.0.77:8276/pang/ws/sub?channel=ca6s906pjh63qlu2ahh0&track=colink`;
+					colinkWs = new WebSocket(colinkUrl);
+					colinkWs.onopen = function (evt) {
+						print("OPEN");
+						console.log(colinkWs);
+						if (colinkWs) {
+							window.setInterval(() => {
+								colinkWs.send("HeartBeat")
+								console.log("heart beat from web")
+							}, 3000)
+							window.addEventListener("gamepadconnected", function (e) {
+								console.log("Gamepad connected");
+							});
+							window.addEventListener("keypress", function (e) {
+								//console.log(e.keyCode);
+								if (e.keyCode === 119) { // 'w'
+									console.log("up");
+									colinkWs.send("CU");
+								}
+								if (e.charCode === 97) {  // 'a'
+									console.log("left");
+									colinkWs.send("CL");
+								}
+								if (e.charCode === 115){  // 's'
+									console.log("back");
+									colinkWs.send("CD");
+								}
+								if (e.charCode === 100){  // 'd'
+									console.log("right");
+									colinkWs.send("CR");
+								}
+								if (e.charCode === 99){	  // 'c'
+									console.log("center");
+									colinkWs.send("CENTER");
+								}
+								if (e.charCode === 99){	  // 'x'
+									console.log("camera center");
+									colinkWs.send("C_CENTER");
+								}
+								/*if (e.charCode === 113){  // 'q'
+									console.log("stop");
+									colinkWs.send("STOP");
+								}*/
+							});
+
+
+							window.addEventListener("keydown", function(event){
+								const key = event.key;
+								switch(event.key){
+									case  "ArrowLeft":
+										colinkWs.send("AL");
+										console.log("left - arrow");
+										break;
+									case  "ArrowRight":
+										colinkWs.send("AR");
+										console.log("right - arrow");
+										break;
+									case  "ArrowUp":
+										colinkWs.send("AU");
+										console.log("up - arrow");
+										break;
+									case  "ArrowDown":
+										console.log("down - arrow");
+										colinkWs.send("AD");
+										break;
+								}
+							});
+						}
+					};
+					colinkWs.onclose = function (evt) {
+						print("CLOSE");
+						colinkWs = null;
+					};
+
+					colinkWs.onmessage = function (evt) {
+						//console.log(evt.data);
+						if (typeof evt.data == "object") {
+							draw(evt.data);
+						} else if (typeof evt.data == "string") {
+							// mimetype.innerHTML = `mime.Type = ${evt.data}`;
+						} else {
+							print("RESPONSE: " + evt.data);
+						}
+					};
+					colinkWs.onerror = function (evt) {
+						print("ERROR: " + evt.data);
+					};
+					return false;
+				};
+				// "Close" button onClick 
+				document.getElementById("close").onclick = function (evt) {
+                    if (!colinkWs) {
+                        return false;
+                    }
+                    if (colinkWs) {
+						print("CLOSE");
+                        colinkWs.close();
+                    }
+                    return false;
+                };
+				/*channelMenu.onchange = function (e) { //채널을 클릭했을 떄.
+                    APIOption.channel = saveChannle[this.value][1];
+					console.log(APIOption);
+
+                    //초기화.
+                    //if (userStream) {
+                    //    var track = userStream.getTracks()[0];
+                    //    track.stop();
+                   	//}
+                    //if (ws) {
+                    //    ws.close();
+                    //}
+                    //video.pause();
+                    //video.src = "";
+                    //clearInterval(interval);
+
+                }*/
+			}
+			//window.onload = document.getElementById("photo").src = window.location.href.slice(0, -1) + ":81/stream";
+		</script>
+  	</body>
+</html>
