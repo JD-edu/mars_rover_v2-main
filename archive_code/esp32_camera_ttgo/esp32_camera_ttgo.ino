@@ -21,8 +21,8 @@
 /***************************************
  *  WiFi
  **************************************/
-#define WIFI_SSID   "GBSA0001"
-#define WIFI_PASSWD "GBSA0001"
+#define WIFI_SSID   "SO070VOIP8335"
+#define WIFI_PASSWD "8D38048334"
 
 // Moth server setting 
 const char* websockets_server_host = "cobot.center";
@@ -35,11 +35,11 @@ WebsocketsClient client;
 String macAddress = "";
 String ipAddress = "";
 
-#if defined(BUTTON_1)
+//#if defined(BUTTON_1)
 //Depend BME280 library ,See https://github.com/mathertel/OneButton
-#include <OneButton.h>
-OneButton button(BUTTON_1, true);
-#endif
+//#include <OneButton.h>
+//OneButton button(BUTTON_1, true);
+//#endif
 
 // Depend OLED library ,See  https://github.com/ThingPulse/esp8266-oled-ssd1306
 #include "SSD1306.h"
@@ -124,7 +124,7 @@ bool setupDisplay()
 void loopDisplay()
 {
     if (ui.update()) {
-        button.tick();
+        //button.tick();
     }
 }
 
@@ -219,7 +219,7 @@ void setupNetwork()
     client.onEvent(onEventsCallback);
     
     // Connect Moth server 
-    while(!client.connect(websockets_server_host, websockets_server_port, "/pang/ws/pub?channel=instant&name=dGVzdA==&track=<label>")) {
+    while(!client.connect(websockets_server_host, websockets_server_port, "/pang/ws/pub?channel=bq5ame6g10l3jia3h0ng&track=video")) {
         delay(500);
         Serial.print(".");
         //oled.clear();
@@ -237,7 +237,7 @@ void setupNetwork()
     //oled.display();
     
 }
-
+/*
 void setupButton()
 {
     button.attachClick([]() {
@@ -271,7 +271,7 @@ void setupButton()
         esp_sleep_enable_ext1_wakeup(((uint64_t)(((uint64_t)1) << BUTTON_1)), ESP_EXT1_WAKEUP_ALL_LOW);
         esp_deep_sleep_start();
     });
-}
+}*/
 
 void setup()
 {
@@ -291,7 +291,7 @@ void setup()
         delay(10000); esp_restart();
     }
 
-    setupButton();
+    //setupButton();
     
     Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2); 
     setupNetwork();
