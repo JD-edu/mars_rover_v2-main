@@ -38,8 +38,8 @@
 // ===========================
 // Enter your WiFi credentials
 // ===========================
-const char* ssid = "ConnectValue_A403_2G";
-const char* password = "CVA403!@#$";
+const char* ssid = "ConnectValue_A401_2G";
+const char* password = "CVA401!@#$";
 
 
 // Moth server setting 
